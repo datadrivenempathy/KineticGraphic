@@ -1,6 +1,6 @@
 KineticGraphic
 ====================================================================================================
-Tiny Processing / P5.js micro-library for graphics that need location seeking.
+Tiny Processing / P5.js micro-library for graphics that need location seeking. See it in action at https://editor.p5js.org/sampottinger/sketches/-xudjJQuF.
 
 <br>
 <br>

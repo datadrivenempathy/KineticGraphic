@@ -260,9 +260,11 @@ class KineticGraphic {
             moveToTargetPos();
         }
 
-        hovering = hoverDetector.isHovering(this, localMouseX, localMouseY);
-        if (hovering && hoverListener != null) {
-            hoverListener.onHover(this);
+        if (hoverDetector != null) {
+          hovering = hoverDetector.isHovering(this, localMouseX, localMouseY);
+          if (hovering && hoverListener != null) {
+              hoverListener.onHover(this);
+          }
         }
     }
 

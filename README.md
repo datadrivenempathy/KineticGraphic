@@ -41,7 +41,7 @@ example code is available in the README.</p>
 <br>
 <br>
 
-Examples - Java
+Examples
 ----------------------------------------------------------------------------------------------------
 Below, we provide both an example in Processing 3 and Processing 4.
 

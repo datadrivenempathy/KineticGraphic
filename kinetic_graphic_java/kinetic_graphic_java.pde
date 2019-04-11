@@ -227,6 +227,15 @@ class KineticGraphic {
     public boolean getIsHovering() {
         return hovering;
     }
+    
+    /**
+     * Determine if this graphic is idling.
+     *
+     * @return: True if idling and false otherwise.
+     */
+    public boolean getIsIdling() {
+       return idling;
+    }
 
     /**
      * Update this graphic's position and internal state.

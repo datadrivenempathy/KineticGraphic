@@ -38,7 +38,7 @@ void setup() {
         (target) -> {
             ellipseMode(RADIUS);
             noStroke();
-            fill(target.getIsHovering() ? #1A6093 : #1A6093);
+            fill(target.getIsHovering() ? #6BE24B : #63B3F5);
             ellipse(0, 0, 10, 10);
         }
     );

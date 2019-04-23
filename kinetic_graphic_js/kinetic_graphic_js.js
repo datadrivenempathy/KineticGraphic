@@ -228,6 +228,17 @@ class KineticGraphic {
     }
 
     /**
+     * Determine if this graphic is "idling".
+     *
+     * @return True if idling (not currently in transit to a new location) and false otherwise (
+     *      in transit to a new location).
+     */
+    getIsIdling() {
+        var self = this;
+        return self.__idling;
+    }
+
+    /**
      * Update this graphic's position and internal state.
      *
      * Update this graphic's position and internal state, moving it closer to its target position
@@ -262,9 +273,11 @@ class KineticGraphic {
             self.moveToTargetPos();
         }
 
-        self.__hovering = self.__hoverDetector(this, localMouseX, localMouseY);
-        if (self.__hovering && self.__hoverListener != null) {
-            self.__hoverListener(self);
+        if (self.__hoverDector !== null) {
+            self.__hovering = self.__hoverDetector(this, localMouseX, localMouseY);
+            if (self.__hovering && self.__hoverListener != null) {
+                self.__hoverListener(self);
+            }
         }
     }
 

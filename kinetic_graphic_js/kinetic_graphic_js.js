@@ -34,9 +34,19 @@ class KineticGraphic {
      *
      * @param newPos The starting position of this graphic.
      * @param newDrawStrategy The strategy to use to draw this graphic.
+     * @param p5Instance The p5 instance to use. Optional parameter defaults to null. If null, will
+     *      use globals.
      */
-    constructor(newPos, newDrawStrategy) {
+    constructor(newPos, newDrawStrategy, p5Instance) {
         var self = this;
+
+        if (p5Instance === undefined || p5Instance === null) {
+            p5Instance = new FakeP5();
+        } else {
+            p5Instance = new DecoratedP5(p5Instance);
+        }
+
+        self.__p5Instance = p5Instance;
 
         self.setPos(newPos);
 
@@ -44,7 +54,7 @@ class KineticGraphic {
         self.__idling = true;
         self.__speed = 0;
         self.__startedMovingToPos = false;
-        self.__lastMillis = millis();
+        self.__lastMillis = self.__p5Instance.millis();
         self.__hovering = false;
 
         self.__minSpeed = 10;
@@ -173,7 +183,7 @@ class KineticGraphic {
      */
     setPos(newPos) {
         var self = this;
-        self.__pos = createVector(newPos.x, newPos.y);
+        self.__pos = self.__p5Instance.createVector(newPos.x, newPos.y);
     }
 
     /**
@@ -183,7 +193,7 @@ class KineticGraphic {
      */
     getPos() {
         var self = this;
-        return createVector(self.__pos.x, self.__pos.y);
+        return self.__p5Instance.createVector(self.__pos.x, self.__pos.y);
     }
 
     /**
@@ -247,7 +257,10 @@ class KineticGraphic {
      */
     update() {
         var self = this;
-        this.updateWithMousePos(mouseX - self.__pos.x, mouseY - self.__pos.y);
+        this.updateWithMousePos(
+            self.__p5Instance.getMouseX() - self.__pos.x,
+            self.__p5Instance.getMouseY() - self.__pos.y
+        );
     }
 
     /**
@@ -286,12 +299,12 @@ class KineticGraphic {
      */
     draw() {
         var self = this;
-        push();
+        self.__p5Instance.push();
 
-        translate(self.__pos.x, self.__pos.y);
+        self.__p5Instance.translate(self.__pos.x, self.__pos.y);
         self.__drawStrategy(self);
 
-        pop();
+        self.__p5Instance.pop();
     }
 
     /**
@@ -302,18 +315,18 @@ class KineticGraphic {
 
         if (!self.__startedMovingToPos) {
             self.__startedMovingToPos = true;
-            self.__lastMillis = millis();
+            self.__lastMillis = self.__p5Instance.millis();
         }
 
-        var diff = createVector(self.__targetPos.x, self.__targetPos.y);
+        var diff = self.__p5Instance.createVector(self.__targetPos.x, self.__targetPos.y);
         diff.sub(self.__pos);
         if (diff.mag() < 1) {
             self.__idling = true;
             self.setPos(self.__targetPos);
         }
 
-        var secDiff = (millis() - self.__lastMillis) / 1000.0;
-        self.__lastMillis = millis();
+        var secDiff = (self.__p5Instance.millis() - self.__lastMillis) / 1000.0;
+        self.__lastMillis = self.__p5Instance.millis();
 
         self.__speed += secDiff * self.__acceleration;
         if (self.__speed > self.__maxSpeed) {
@@ -321,16 +334,244 @@ class KineticGraphic {
         }
 
         if (diff.mag() < 120) {
-            self.__speed = min(
-                map(diff.mag(), self.__slowDownRadius, 0, self.__maxSpeed, self.__minSpeed),
+            self.__speed = self.__p5Instance.min(
+                self.__p5Instance.map(
+                    diff.mag(),
+                    self.__slowDownRadius,
+                    0,
+                    self.__maxSpeed,
+                    self.__minSpeed
+                ),
                 self.__speed
             );
         }
 
         var origMult = diff.mag();
         diff.normalize();
-        diff.mult(min(self.__speed * secDiff, origMult));
+        diff.mult(self.__p5Instance.min(self.__speed * secDiff, origMult));
         self.__pos.add(diff);
+    }
+
+}
+
+
+/**
+ * Fake p5 isntance that relays calls to global.
+ */
+class FakeP5 {
+
+    /**
+     * Get the milliseconds since sketch start.
+     *
+     * @return Milliseconds since sketch start.
+     */
+    millis() {
+        return millis();
+    }
+
+    /**
+     * Create a new p5.Vector.
+     *
+     * @param x Horizontal coordinate in pixels.
+     * @param y Vertical coordinate in pixels.
+     * @return Newly created vector.
+     */
+    createVector(x, y) {
+        return createVector(x, y);
+    }
+
+    /**
+     * Get the x position of the cursor.
+     *
+     * @return Horizontal position of the cursor in pixels.
+     */
+    getMouseX() {
+        return mouseX;
+    }
+
+    /**
+     * Get the y position of the cursor.
+     *
+     * @return Vertical position of the cursor in pixels.
+     */
+    getMouseY() {
+        return mouseY;
+    }
+
+    /**
+     * Save the current style and matrix to the stack.
+     */
+    push() {
+        push();
+    }
+
+    /**
+     * Pop to the next previously saved style / matrix on the stack.
+     */
+    pop() {
+        pop();
+    }
+
+    /**
+     * Update the positional matrix.
+     *
+     * @param x The amount of pixels to offset in the horizontal direction.
+     * @param y The amount of pixels to offset in the vertical direction.
+     */
+    translate(x, y) {
+        translate(x, y);
+    }
+
+    /**
+     * Return the minimum of two numbers.
+     *
+     * @param value1 The first value to include in the min operation.
+     * @param value2 The second value to include in the min operation.
+     * @return The miniumum of value1 and value2.
+     */
+    min(value1, value2) {
+        return min(value1, value2);
+    }
+
+    /**
+     * Linearly interpolate a value.
+     *
+     * @param value The input into the linear interpolation.
+     * @param domainMin The miniumum value allowed into the linear interpolation.
+     * @param domainMax The maxiumum value allowed into the linear interpolation.
+     * @param rangeMin The minimum value allowed out of the linear interpolation.
+     * @param rangeMax The maximum value allowed out of the linear interpolation.
+     * @return The value after interpolation.
+     */
+    map(value, domainMin, domainMax, rangeMin, rangeMax) {
+        return map(value, domainMin, domainMax, rangeMin, rangeMax);
+    }
+
+    /**
+     * Get the horizatonal position of the cursor.
+     *
+     * @return The x coordiante of the cursor.
+     */
+    getMouseX() {
+        return mouseX;
+    }
+
+    /**
+     * Get the vertical position of the cursor.
+     *
+     * @return The y coordinate of the cursor.
+     */
+    getMouseY() {
+        return mouseY;
+    }
+
+}
+
+
+/**
+ * Decorator around p5 when running in instance mode.
+ */
+class DecoratedP5 {
+
+    constructor(innerP5) {
+        var self = this;
+        self.__innerP5 = innerP5;
+    }
+
+    /**
+     * Get the milliseconds since sketch start.
+     *
+     * @return Milliseconds since sketch start.
+     */
+    millis() {
+        var self = this;
+        return self.__innerP5.millis();
+    }
+
+    /**
+     * Create a new p5.Vector.
+     *
+     * @param x Horizontal coordinate in pixels.
+     * @param y Vertical coordinate in pixels.
+     * @return Newly created vector.
+     */
+    createVector(x, y) {
+        var self = this;
+        return self.__innerP5.createVector(x, y);
+    }
+
+    /**
+     * Get the x position of the cursor.
+     *
+     * @return Horizontal position of the cursor in pixels.
+     */
+    getMouseX() {
+        var self = this;
+        return self.__innerP5.mouseX;
+    }
+
+    /**
+     * Get the y position of the cursor.
+     *
+     * @return Vertical position of the cursor in pixels.
+     */
+    getMouseY() {
+        var self = this;
+        return self.__innerP5.mouseY;
+    }
+
+    /**
+     * Save the current style and matrix to the stack.
+     */
+    push() {
+        var self = this;
+        self.__innerP5.push();
+    }
+
+    /**
+     * Pop to the next previously saved style / matrix on the stack.
+     */
+    pop() {
+        var self = this;
+        self.__innerP5.pop();
+    }
+
+    /**
+     * Update the positional matrix.
+     *
+     * @param x The amount of pixels to offset in the horizontal direction.
+     * @param y The amount of pixels to offset in the vertical direction.
+     */
+    translate(x, y) {
+        var self = this;
+        self.__innerP5.translate(x, y);
+    }
+
+    /**
+     * Return the minimum of two numbers.
+     *
+     * @param value1 The first value to include in the min operation.
+     * @param value2 The second value to include in the min operation.
+     * @return The miniumum of value1 and value2.
+     */
+    min(value1, value2) {
+        var self = this;
+        return self.__innerP5.min(value1, value);
+    }
+
+    /**
+     * Linearly interpolate a value.
+     *
+     * @param value The input into the linear interpolation.
+     * @param domainMin The miniumum value allowed into the linear interpolation.
+     * @param domainMax The maxiumum value allowed into the linear interpolation.
+     * @param rangeMin The minimum value allowed out of the linear interpolation.
+     * @param rangeMax The maximum value allowed out of the linear interpolation.
+     * @return The value after interpolation.
+     */
+    map(value, domainMin, domainMax, rangeMin, rangeMax) {
+        var self = this;
+        return self.__innerP5.map(value, domainMin, domainMax, rangeMin, rangeMax);
     }
 
 }

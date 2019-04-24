@@ -208,7 +208,20 @@ function draw() {
 }
 ```
 
-This P5 sketch is also at https://editor.p5js.org/sampottinger/sketches/-xudjJQuF.
+This P5 sketch is also at https://editor.p5js.org/sampottinger/sketches/-xudjJQuF. Note that, if using instance mode, one can provide the instance to the KineticGraphic constructor like so:
+
+```
+var example = new KineticGraphic(
+    createVector(0, 0),
+    function (target) {
+        ellipseMode(RADIUS);
+        noStroke();
+        fill(target.getIsHovering() ? "#CC1A6093" : "#551A6093");
+        ellipse(0, 0, 10, 10);
+    },
+    p5Instance
+);
+```
 
 <br>
 <br>

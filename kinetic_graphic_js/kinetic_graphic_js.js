@@ -556,7 +556,7 @@ class DecoratedP5 {
      */
     min(value1, value2) {
         var self = this;
-        return self.__innerP5.min(value1, value);
+        return self.__innerP5.min(value1, value2);
     }
 
     /**
